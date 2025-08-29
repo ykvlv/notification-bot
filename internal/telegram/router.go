@@ -78,6 +78,8 @@ func (r *Router) HandleUpdate(ctx context.Context, upd tgbotapi.Update) {
 			r.handlePause(ctx, chatID)
 		case strings.HasPrefix(text, "/resume"):
 			r.handleResume(ctx, chatID)
+		case strings.HasPrefix(text, "/examples"):
+			r.handleExamples(ctx, chatID)
 		default:
 			// Free-form text used in "Custom" flows (interval/hours/tz/message)
 			r.handleFreeForm(ctx, chatID, text)
@@ -110,6 +112,9 @@ func (r *Router) HandleUpdate(ctx context.Context, upd tgbotapi.Update) {
 
 		case data == "set_msg":
 			r.askMessage(ctx, chatID, cb.ID)
+
+		case data == "send_examples":
+			r.handleExamples(ctx, chatID)
 
 		default:
 			// Unknown callback — ignore silently

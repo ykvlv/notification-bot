@@ -4,8 +4,8 @@ import tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 
 // UI texts in English
 const (
-	startText = "👋 Hi! I'm your motivation reminder bot.\n\n" +
-		"Set your interval, active hours and custom message — and I will keep you on track."
+	startText = "I am a reminder bot. Set interval, active hours, timezone and your message — I will ping you.\n\n" +
+		"Need ready-made sounds? Use /examples to get MP3 files and set them as custom notification sounds in Telegram."
 	statusTitle = "Your current settings:"
 	statusFmt   = "• Interval: %s\n• Active hours: %s–%s\n• TZ: %s\n• Enabled: %s\n• Next: %s\n• Message: %s\n"
 )
@@ -37,6 +37,9 @@ func settingsInlineKeyboard() tgbotapi.InlineKeyboardMarkup {
 		tgbotapi.NewInlineKeyboardRow(
 			tgbotapi.NewInlineKeyboardButtonData("Timezone", "set_tz"),
 			tgbotapi.NewInlineKeyboardButtonData("Message", "set_msg"),
+		),
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("Audio examples", "send_examples"),
 		),
 	)
 }

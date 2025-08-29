@@ -4,6 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/ykvlv/notification-bot/assets"
+	"io"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -37,10 +40,12 @@ func (r *Router) ensureUser(ctx context.Context, chatID int64) (*domain.User, er
 		ActiveFromM: defaultFromM,
 		ActiveToM:   defaultToM,
 		Message:     defaultMessage,
-		NextFireAt:  nil,
-		LastSentAt:  nil,
 		CreatedAt:   now,
 	}
+	// Compute initial next_fire_at right away
+	next := domain.NextFire(now, u)
+	u.NextFireAt = &next
+
 	if err := r.repo.UpsertUser(ctx, u); err != nil {
 		return nil, err
 	}
@@ -370,4 +375,40 @@ func (r *Router) handleResume(ctx context.Context, chatID int64) {
 	msg := tgbotapi.NewMessage(chatID, "Resumed ✅")
 	msg.ReplyMarkup = mainMenuKeyboard(true)
 	_, _ = r.bot.Send(msg)
+}
+
+// handleExamples sends all bundled MP3s to the user.
+func (r *Router) handleExamples(ctx context.Context, chatID int64) {
+	files := assets.List()
+	if len(files) == 0 {
+		r.sendText(chatID, "No audio examples bundled.")
+		return
+	}
+
+	r.sendText(chatID, "Sending audio examples…")
+	for _, p := range files {
+		f, err := assets.AudioFS.Open(p)
+		if err != nil {
+			r.log.Error("open embedded audio failed", zap.String("path", p), zap.Error(err))
+			continue
+		}
+		data, err := io.ReadAll(f)
+		_ = f.Close()
+		if err != nil {
+			r.log.Error("read embedded audio failed", zap.String("path", p), zap.Error(err))
+			continue
+		}
+
+		// Telegram needs a name for uploaded file
+		name := filepath.Base(p)
+		audio := tgbotapi.NewAudio(chatID, tgbotapi.FileBytes{
+			Name:  name,
+			Bytes: data,
+		})
+		// Optional: title/caption
+		if _, err := r.bot.Send(audio); err != nil {
+			r.log.Error("send audio failed", zap.String("path", p), zap.Error(err))
+		}
+	}
+	r.sendText(chatID, "Done. Open the chat’s notification settings in Telegram to set a custom sound.")
 }

@@ -167,3 +167,24 @@ It computes and stores `next_fire_at`. Actual dispatching of notifications will 
 **Status:**  
 The bot now automatically **dispatches notifications** at the configured interval, respecting active hours and user timezone.  
 After each message, the scheduler updates scheduling fields in DB to ensure continuous reminders.
+
+## Stage 5 — Audio Examples & Initial NextFire
+
+- **Fix:**
+  - When a new user is created via `/start`, the bot now computes and persists `next_fire_at` immediately using `domain.NextFire`.
+  - As a result, `/status` for a fresh user shows a valid **Next** time instead of `—`.
+
+- **Audio Examples:**
+  - Added bundled MP3 examples under `assets/` and embedded them via `go:embed`.
+  - Files: `Motivation.mp3`, `Do_It.mp3`, `Gym.mp3` (can be extended with more meme sounds later).
+  - New command `/examples` and new button **"Audio examples"** in `/settings`.
+  - Handler sends all embedded MP3s to the user as Telegram audio files.
+  - No DB fields are used; users can set these MP3s as **custom notification sounds** in Telegram client settings.
+
+- **UX:**
+  - `/start` message updated to mention `/examples` and the ability to receive ready-made MP3 sounds.
+  - After sending audio, bot reminds users: *"Open Telegram notification settings to set this as a custom sound."*
+
+**Status:**  
+The bot now not only manages intervals, hours, timezone, and messages with automatic notifications,  
+but also provides **ready-made audio examples** for quick use as Telegram custom sounds.
