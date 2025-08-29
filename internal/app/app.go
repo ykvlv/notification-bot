@@ -13,6 +13,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/ykvlv/notification-bot/internal/config"
+	"github.com/ykvlv/notification-bot/internal/store"
 )
 
 type App struct {
@@ -20,6 +21,7 @@ type App struct {
 	log     *zap.Logger
 	bot     *tgbotapi.BotAPI
 	httpSrv *http.Server
+	repo    store.Repo
 }
 
 func New(cfg config.Config, log *zap.Logger) (*App, error) {
@@ -47,6 +49,15 @@ func (a *App) Run(ctx context.Context) error {
 		zap.String("http", a.cfg.HTTPAddr),
 	)
 
+	// Open SQLite and run migrations.
+	repo, err := store.OpenSQLite(ctx, a.cfg.DBPath)
+	if err != nil {
+		a.log.Error("open sqlite failed", zap.Error(err))
+		return err
+	}
+	a.repo = repo
+	a.log.Info("sqlite ready")
+
 	go func() {
 		if err := a.httpSrv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			a.log.Error("http server error", zap.Error(err))
@@ -72,6 +83,9 @@ func (a *App) Run(ctx context.Context) error {
 
 			if err != nil {
 				a.log.Warn("http server shutdown error", zap.Error(err))
+			}
+			if a.repo != nil {
+				_ = a.repo.Close()
 			}
 			return nil
 
