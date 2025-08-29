@@ -7,14 +7,23 @@ const (
 	startText = "👋 Hi! I'm your motivation reminder bot.\n\n" +
 		"Set your interval, active hours and custom message — and I will keep you on track."
 	statusTitle = "Your current settings:"
-	statusFmt   = "• Interval: %s\n• Active hours: %s–%s\n• TZ: %s\n• Enabled: %s\n• Next: %s\n"
+	statusFmt   = "• Interval: %s\n• Active hours: %s–%s\n• TZ: %s\n• Enabled: %s\n• Next: %s\n• Message: %s\n"
 )
 
-func mainMenuKeyboard() tgbotapi.ReplyKeyboardMarkup {
+// mainMenuKeyboard builds a reply keyboard with a single toggle button:
+// if enabled is true -> "/pause", else -> "/resume".
+func mainMenuKeyboard(enabled bool) tgbotapi.ReplyKeyboardMarkup {
+	toggle := "/pause"
+	if !enabled {
+		toggle = "/resume"
+	}
 	return tgbotapi.NewReplyKeyboard(
 		tgbotapi.NewKeyboardButtonRow(
 			tgbotapi.NewKeyboardButton("/status"),
 			tgbotapi.NewKeyboardButton("/settings"),
+		),
+		tgbotapi.NewKeyboardButtonRow(
+			tgbotapi.NewKeyboardButton(toggle),
 		),
 	)
 }
@@ -49,6 +58,35 @@ func intervalPresetsKeyboard() tgbotapi.InlineKeyboardMarkup {
 			tgbotapi.NewInlineKeyboardButtonData("12h", "interval:12h"),
 			tgbotapi.NewInlineKeyboardButtonData("24h", "interval:24h"),
 			tgbotapi.NewInlineKeyboardButtonData("Custom…", "interval:custom"),
+		),
+	)
+}
+
+func hoursPresetsKeyboard() tgbotapi.InlineKeyboardMarkup {
+	return tgbotapi.NewInlineKeyboardMarkup(
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("08:00–22:00", "hours:08:00-22:00"),
+			tgbotapi.NewInlineKeyboardButtonData("09:00–21:00", "hours:09:00-21:00"),
+		),
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("22:00–02:00", "hours:22:00-02:00"),
+			tgbotapi.NewInlineKeyboardButtonData("Custom…", "hours:custom"),
+		),
+	)
+}
+
+func tzPresetsKeyboard() tgbotapi.InlineKeyboardMarkup {
+	return tgbotapi.NewInlineKeyboardMarkup(
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("Europe/Moscow", "tz:Europe/Moscow"),
+			tgbotapi.NewInlineKeyboardButtonData("Europe/Tallinn", "tz:Europe/Tallinn"),
+		),
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("Asia/Almaty", "tz:Asia/Almaty"),
+			tgbotapi.NewInlineKeyboardButtonData("UTC", "tz:UTC"),
+		),
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("Custom…", "tz:custom"),
 		),
 	)
 }

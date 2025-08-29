@@ -3,6 +3,7 @@ package telegram
 import (
 	"context"
 	"strings"
+	"sync"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"go.uber.org/zap"
@@ -10,13 +11,21 @@ import (
 	"github.com/ykvlv/notification-bot/internal/store"
 )
 
-// Router holds bot API, logger and repo dependency.
-type Router struct {
-	bot  *tgbotapi.BotAPI
-	log  *zap.Logger
-	repo store.Repo
+// Pending state keys used in conversational flows.
+const (
+	pendingInterval = "await_interval_text"
+	pendingHours    = "await_hours_text"
+	pendingTZ       = "await_tz_text"
+	pendingMessage  = "await_message_text"
+)
 
+// Router wires Telegram updates to handlers and holds minimal in-memory state.
+type Router struct {
+	bot   *tgbotapi.BotAPI
+	log   *zap.Logger
+	repo  store.Repo
 	state map[int64]string // chatID -> pending state
+	mu    sync.RWMutex
 }
 
 // NewRouter creates a new Telegram router.
@@ -29,12 +38,30 @@ func NewRouter(bot *tgbotapi.BotAPI, log *zap.Logger, repo store.Repo) *Router {
 	}
 }
 
-func (r *Router) setPending(chatID int64, s string) { r.state[chatID] = s }
-func (r *Router) getPending(chatID int64) string    { return r.state[chatID] }
-func (r *Router) clearPending(chatID int64)         { delete(r.state, chatID) }
+// setPending sets a pending state for a chat (non-persistent, in-memory).
+func (r *Router) setPending(chatID int64, s string) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.state[chatID] = s
+}
 
-// HandleUpdate routes a single update.
+// getPending returns current pending state for a chat.
+func (r *Router) getPending(chatID int64) string {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	return r.state[chatID]
+}
+
+// clearPending clears a pending state for a chat.
+func (r *Router) clearPending(chatID int64) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	delete(r.state, chatID)
+}
+
+// HandleUpdate routes a single update to appropriate handler.
 func (r *Router) HandleUpdate(ctx context.Context, upd tgbotapi.Update) {
+	// Text messages
 	if upd.Message != nil {
 		msg := upd.Message
 		chatID := msg.Chat.ID
@@ -47,23 +74,45 @@ func (r *Router) HandleUpdate(ctx context.Context, upd tgbotapi.Update) {
 			r.handleStatus(ctx, chatID)
 		case strings.HasPrefix(text, "/settings"):
 			r.handleSettings(ctx, chatID)
+		case strings.HasPrefix(text, "/pause"):
+			r.handlePause(ctx, chatID)
+		case strings.HasPrefix(text, "/resume"):
+			r.handleResume(ctx, chatID)
 		default:
+			// Free-form text used in "Custom" flows (interval/hours/tz/message)
 			r.handleFreeForm(ctx, chatID, text)
 		}
 		return
 	}
 
+	// Callback queries (inline buttons)
 	if upd.CallbackQuery != nil {
 		cb := upd.CallbackQuery
 		data := cb.Data
 		chatID := cb.Message.Chat.ID
+
 		switch {
-		case strings.HasPrefix(data, "set_interval"):
+		// Settings sections
+		case data == "set_interval":
 			r.askIntervalPresets(ctx, chatID, cb.ID)
 		case strings.HasPrefix(data, "interval:"):
 			r.handleIntervalCallback(ctx, chatID, data, cb.ID)
+
+		case data == "set_hours":
+			r.askHoursPresets(ctx, chatID, cb.ID)
+		case strings.HasPrefix(data, "hours:"):
+			r.handleHoursCallback(ctx, chatID, data, cb.ID)
+
+		case data == "set_tz":
+			r.askTZPresets(ctx, chatID, cb.ID)
+		case strings.HasPrefix(data, "tz:"):
+			r.handleTZCallback(ctx, chatID, data, cb.ID)
+
+		case data == "set_msg":
+			r.askMessage(ctx, chatID, cb.ID)
+
 		default:
-			// ignore unknown
+			// Unknown callback — ignore silently
 		}
 		return
 	}

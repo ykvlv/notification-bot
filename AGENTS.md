@@ -121,3 +121,24 @@ At this stage, the bot can:
 - Show current settings with `/status`.
 - Open settings with `/settings`.
 - Update interval via presets or custom input.
+
+## Stage 3 — Active Hours, Timezone, Message, NextFire
+
+- Implemented **NextFire** computation (`internal/domain/schedule.go`):
+  - Respects user interval, active hours window (including wrap-around windows like 22:00–02:00), and IANA timezone.
+  - If outside window, jumps to next window start; otherwise advances by interval and clamps to next valid window.
+
+- Extended Telegram handlers:
+  - **Active hours** (`set_hours`): presets (08:00–22:00, 09:00–21:00, 22:00–02:00) + Custom input (`HH:MM–HH:MM`).
+  - **Timezone** (`set_tz`): presets (Europe/Moscow, Europe/Tallinn, Asia/Almaty, UTC) + Custom IANA input.
+  - **Message** (`set_msg`): free-form text (<= 512 chars). `/status` now displays the current message.
+  - **Pause/Resume**: `/pause`, `/resume` toggle `enabled` and recompute next trigger.
+    - Main menu keyboard now shows a single dynamic button: either `/pause` or `/resume` depending on the current state.
+  - All setting changes recompute and persist `next_fire_at`.
+
+- Router pending states extended:
+  - `await_hours_text`, `await_tz_text`, `await_message_text`.
+
+**Status:**  
+The bot can now fully configure **interval**, **active hours**, **timezone**, and **message**.  
+It computes and stores `next_fire_at`. Actual dispatching of notifications will be implemented in Stage 4.
