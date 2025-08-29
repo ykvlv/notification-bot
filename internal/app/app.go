@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"errors"
+	"github.com/ykvlv/notification-bot/internal/telegram"
 	"net/http"
 	"os"
 	"os/signal"
@@ -22,6 +23,7 @@ type App struct {
 	bot     *tgbotapi.BotAPI
 	httpSrv *http.Server
 	repo    store.Repo
+	router  *telegram.Router
 }
 
 func New(cfg config.Config, log *zap.Logger) (*App, error) {
@@ -58,6 +60,8 @@ func (a *App) Run(ctx context.Context) error {
 	a.repo = repo
 	a.log.Info("sqlite ready")
 
+	a.router = telegram.NewRouter(a.bot, a.log, a.repo)
+
 	go func() {
 		if err := a.httpSrv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			a.log.Error("http server error", zap.Error(err))
@@ -89,8 +93,8 @@ func (a *App) Run(ctx context.Context) error {
 			}
 			return nil
 
-		case <-updCh:
-			// Stage 0: ignore updates
+		case upd := <-updCh:
+			a.router.HandleUpdate(ctx, upd)
 		}
 	}
 }

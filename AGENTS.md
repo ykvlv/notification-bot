@@ -87,3 +87,37 @@ notification-bot/
   - `SetEnabled` — enable/disable user.
   - `Close` — close DB connection.
 - App startup now opens DB and logs `"sqlite ready"`.
+
+## Stage 2 — Parsers & Basic Telegram Handlers
+
+- Added parsers and validators (`internal/domain/parse.go`):
+  - **Duration** parser: accepts `30m`, `1h`, `1h30m`, `90m`, `24h` etc. → validates (10m ≤ d ≤ 72h).
+  - **Active hours** parser: accepts `HH:MM–HH:MM` or `HH:MM-HH:MM` → returns minutes since midnight.
+  - **Timezone** validator: checks IANA TZ (via `time.LoadLocation`).
+  - **Formatters**: `FormatMinutes` → `HH:MM`, `LocalizeTime` → localized `HH:MM`.
+
+- Added Telegram UI layer (`internal/telegram/`):
+  - **texts.go**: static texts + keyboards (main menu, settings menu, interval presets).
+  - **router.go**: routes updates (messages, callbacks) to handlers.
+  - **handlers.go**:
+    - `/start`: ensures user exists (with defaults) and shows main menu.
+    - `/status`: displays current settings (interval, active hours, TZ, enabled flag, next fire time).
+    - `/settings`: shows inline keyboard for changing settings (Interval, Active hours, TZ, Message).
+    - Interval flow:
+      - Preset buttons: 30m, 1h, 2h, 3h, 4h, 6h, 8h, 12h, 24h.
+      - Custom input: expects next free-form message, validates duration.
+      - Updates DB via `repo.UpsertUser`.
+
+- Added simple **in-memory pending state** in router (chatID → "await_interval_text") to support conversational flows.
+  - To be moved into DB later if needed.
+
+- App (`app.go`) now wires `telegram.Router` into update loop:
+  - `router.HandleUpdate(ctx, upd)` called for every update.
+  - Repo ensures user row on first `/start`.
+
+**Status:**  
+At this stage, the bot can:
+- Initialize a user with defaults.
+- Show current settings with `/status`.
+- Open settings with `/settings`.
+- Update interval via presets or custom input.
