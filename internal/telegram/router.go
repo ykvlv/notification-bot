@@ -116,6 +116,14 @@ func (r *Router) HandleUpdate(ctx context.Context, upd tgbotapi.Update) {
 		case data == "send_examples":
 			r.handleExamples(ctx, chatID)
 
+		case data == "back_to_menu":
+			if err := r.answerCallback(cb.ID, ""); err != nil {
+				r.log.Warn("callback ack failed", zap.Error(err))
+			}
+			msg := tgbotapi.NewMessage(chatID, "Settings:")
+			msg.ReplyMarkup = settingsInlineKeyboard()
+			_, _ = r.bot.Send(msg)
+
 		default:
 			// Unknown callback — ignore silently
 		}

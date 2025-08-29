@@ -188,3 +188,14 @@ After each message, the scheduler updates scheduling fields in DB to ensure cont
 **Status:**  
 The bot now not only manages intervals, hours, timezone, and messages with automatic notifications,  
 but also provides **ready-made audio examples** for quick use as Telegram custom sounds.
+
+## Stage 6 — UX Polishing & Docs
+
+- Improved user-facing texts:
+  - Emojis in `/start`, `/status`, and settings menus.
+  - Clearer headings and confirmation messages.
+- Added **Back** inline action in interval/hours/timezone flows.
+- Start message now highlights `/examples` and explains MP3 usage.
+- README.md written:
+  - Features, commands, configuration, storage, build, license.
+  - With a playful note: *“☕️ This bot was fully vibe-coded in ~3 hours, powered by a liter of tea, a pack of cookies, and ChatGPT 5.”*

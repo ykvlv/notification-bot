@@ -4,9 +4,10 @@ import tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 
 // UI texts in English
 const (
-	startText = "I am a reminder bot. Set interval, active hours, timezone and your message — I will ping you.\n\n" +
-		"Need ready-made sounds? Use /examples to get MP3 files and set them as custom notification sounds in Telegram."
-	statusTitle = "Your current settings:"
+	startText = "👋 I am a reminder bot.\n\n" +
+		"Set interval, active hours, timezone and your message — I will ping you.\n\n" +
+		"🎵 Need ready-made sounds? Use /examples to get MP3s and set them as custom notification sounds in Telegram."
+	statusTitle = "🧾 Your current settings:"
 	statusFmt   = "• Interval: %s\n• Active hours: %s–%s\n• TZ: %s\n• Enabled: %s\n• Next: %s\n• Message: %s\n"
 )
 
@@ -28,18 +29,19 @@ func mainMenuKeyboard(enabled bool) tgbotapi.ReplyKeyboardMarkup {
 	)
 }
 
+// Inline keyboards
 func settingsInlineKeyboard() tgbotapi.InlineKeyboardMarkup {
 	return tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonData("Interval", "set_interval"),
-			tgbotapi.NewInlineKeyboardButtonData("Active hours", "set_hours"),
+			tgbotapi.NewInlineKeyboardButtonData("⏲️ Interval", "set_interval"),
+			tgbotapi.NewInlineKeyboardButtonData("🕘 Active hours", "set_hours"),
 		),
 		tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonData("Timezone", "set_tz"),
-			tgbotapi.NewInlineKeyboardButtonData("Message", "set_msg"),
+			tgbotapi.NewInlineKeyboardButtonData("🌍 Timezone", "set_tz"),
+			tgbotapi.NewInlineKeyboardButtonData("📝 Message", "set_msg"),
 		),
 		tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonData("Audio examples", "send_examples"),
+			tgbotapi.NewInlineKeyboardButtonData("🎵 Audio examples", "send_examples"),
 		),
 	)
 }
@@ -60,7 +62,10 @@ func intervalPresetsKeyboard() tgbotapi.InlineKeyboardMarkup {
 		tgbotapi.NewInlineKeyboardRow(
 			tgbotapi.NewInlineKeyboardButtonData("12h", "interval:12h"),
 			tgbotapi.NewInlineKeyboardButtonData("24h", "interval:24h"),
-			tgbotapi.NewInlineKeyboardButtonData("Custom…", "interval:custom"),
+			tgbotapi.NewInlineKeyboardButtonData("✍️ Custom…", "interval:custom"),
+		),
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("⬅️ Back", "back_to_menu"),
 		),
 	)
 }
@@ -73,7 +78,10 @@ func hoursPresetsKeyboard() tgbotapi.InlineKeyboardMarkup {
 		),
 		tgbotapi.NewInlineKeyboardRow(
 			tgbotapi.NewInlineKeyboardButtonData("22:00–02:00", "hours:22:00-02:00"),
-			tgbotapi.NewInlineKeyboardButtonData("Custom…", "hours:custom"),
+			tgbotapi.NewInlineKeyboardButtonData("✍️ Custom…", "hours:custom"),
+		),
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("⬅️ Back", "back_to_menu"),
 		),
 	)
 }
@@ -89,7 +97,10 @@ func tzPresetsKeyboard() tgbotapi.InlineKeyboardMarkup {
 			tgbotapi.NewInlineKeyboardButtonData("UTC", "tz:UTC"),
 		),
 		tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonData("Custom…", "tz:custom"),
+			tgbotapi.NewInlineKeyboardButtonData("✍️ Custom…", "tz:custom"),
+		),
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("⬅️ Back", "back_to_menu"),
 		),
 	)
 }
