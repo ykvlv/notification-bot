@@ -117,3 +117,10 @@ func (r *Router) HandleUpdate(ctx context.Context, upd tgbotapi.Update) {
 		return
 	}
 }
+
+// SendMessage sends a plain text message to the given chat.
+// This makes Router satisfy scheduler.Sender.
+func (r *Router) SendMessage(chatID int64, text string) error {
+	_, err := r.bot.Send(tgbotapi.NewMessage(chatID, text))
+	return err
+}

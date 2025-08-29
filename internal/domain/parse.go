@@ -9,12 +9,19 @@ import (
 	"time"
 )
 
+var (
+	ErrEmptyDuration   = errors.New("empty duration")
+	ErrInvalidDuration = errors.New("invalid duration")
+	ErrTooSmall        = errors.New("duration too small")
+	ErrTooLarge        = errors.New("duration too large")
+)
+
 // ParseDurationHuman parses human-friendly durations like "30m", "1h30m", "90m", "2h".
 // Constraints (MVP): 10m <= d <= 72h.
 func ParseDurationHuman(s string) (time.Duration, error) {
 	s = strings.TrimSpace(strings.ToLower(s))
 	if s == "" {
-		return 0, errors.New("empty duration")
+		return 0, ErrEmptyDuration
 	}
 	// Accept formats: "90m", "2h", "1h30m"
 	var total time.Duration
@@ -38,15 +45,15 @@ func ParseDurationHuman(s string) (time.Duration, error) {
 		}
 		// Fallback: if none matched and not all digits, it's invalid
 		if total == 0 && !(strings.Contains(s, "h") || strings.Contains(s, "m")) {
-			return 0, fmt.Errorf("invalid duration: %s", s)
+			return 0, fmt.Errorf("%w: %s", ErrInvalidDuration, s)
 		}
 	}
 
 	if total < 10*time.Minute {
-		return 0, errors.New("duration too small (min 10m)")
+		return 0, fmt.Errorf("%w: min 10m", ErrTooSmall)
 	}
 	if total > 72*time.Hour {
-		return 0, errors.New("duration too large (max 72h)")
+		return 0, fmt.Errorf("%w: max 72h", ErrTooLarge)
 	}
 	return total, nil
 }

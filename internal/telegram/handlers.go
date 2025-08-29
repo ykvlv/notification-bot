@@ -2,6 +2,7 @@ package telegram
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -55,6 +56,19 @@ func (r *Router) sendText(chatID int64, text string) {
 func (r *Router) answerCallback(id, text string) error {
 	_, err := r.bot.Request(tgbotapi.NewCallback(id, text))
 	return err
+}
+
+func (r *Router) sendDurationError(chatID int64, err error) {
+	switch {
+	case errors.Is(err, domain.ErrTooSmall):
+		r.sendText(chatID, "Interval is too short. Minimum is 10m.")
+	case errors.Is(err, domain.ErrTooLarge):
+		r.sendText(chatID, "Interval is too long. Maximum is 72h.")
+	case errors.Is(err, domain.ErrEmptyDuration), errors.Is(err, domain.ErrInvalidDuration):
+		r.sendText(chatID, "Invalid interval. Examples: 30m, 1h, 1h30m.")
+	default:
+		r.sendText(chatID, "Failed to parse interval.")
+	}
 }
 
 // --- Core commands ---
@@ -145,7 +159,7 @@ func (r *Router) handleIntervalCallback(ctx context.Context, chatID int64, data 
 	val := strings.TrimPrefix(data, "interval:")
 	dur, err := domain.ParseDurationHuman(val)
 	if err != nil {
-		r.sendText(chatID, "Invalid interval. Examples: 30m, 1h, 1h30m.")
+		r.sendDurationError(chatID, err)
 		return
 	}
 	if err := r.updateInterval(ctx, chatID, dur); err != nil {
@@ -176,7 +190,7 @@ func (r *Router) handleFreeForm(ctx context.Context, chatID int64, text string) 
 		r.clearPending(chatID)
 		dur, err := domain.ParseDurationHuman(text)
 		if err != nil {
-			r.sendText(chatID, "Invalid interval. Examples: 30m, 1h, 1h30m.")
+			r.sendDurationError(chatID, err)
 			return
 		}
 		if err := r.updateInterval(ctx, chatID, dur); err != nil {

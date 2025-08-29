@@ -142,3 +142,28 @@ At this stage, the bot can:
 **Status:**  
 The bot can now fully configure **interval**, **active hours**, **timezone**, and **message**.  
 It computes and stores `next_fire_at`. Actual dispatching of notifications will be implemented in Stage 4.
+
+## Stage 4 — Scheduler & Notification Dispatch
+
+- Implemented **scheduler** (`internal/scheduler/scheduler.go`):
+  - Runs a background loop every 30 seconds.
+  - Calls `repo.ListDue(now)` to fetch users with `next_fire_at <= now`.
+  - Sends `u.Message` to each due user via Telegram.
+  - Updates `last_sent_at` and recomputes `next_fire_at` using `domain.NextFire`.
+
+- Extended **telegram.Router**:
+  - Added `SendMessage(chatID, text)` method so Router implements `scheduler.Sender`.
+
+- Integrated scheduler into `app.Run`:
+  - Created a scheduler instance with repo, logger, and router.
+  - Launched it in a goroutine alongside the update loop.
+  - Scheduler stops gracefully on context cancel.
+
+- Improved **graceful shutdown**:
+  - Added `bot.StopReceivingUpdates()` to stop Telegram polling.
+  - Updates channel (`updCh`) is handled safely if closed.
+  - Ensures HTTP server and DB are closed on shutdown.
+
+**Status:**  
+The bot now automatically **dispatches notifications** at the configured interval, respecting active hours and user timezone.  
+After each message, the scheduler updates scheduling fields in DB to ensure continuous reminders.
