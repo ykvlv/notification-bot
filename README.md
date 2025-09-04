@@ -3,6 +3,8 @@
 A simple Telegram reminder bot written in Go.  
 Sends motivational (or any) reminders at a configurable interval, within active hours, respecting user timezone.
 
+https://t.me/ykvlv_notification_bot
+
 ## Features
 - Per-user settings (stored in embedded SQLite):
 	- Interval (e.g., `30m`, `1h30m`, `24h`)
@@ -54,4 +56,4 @@ MIT. See `LICENSE.md`.
 
 ---
 
-☕️ This bot was fully vibe-coded in ~3 hours, powered by a liter of tea, a pack of cookies, and ChatGPT 5.
+☕️ This bot was fully vibe-coded in ~3 hours, powered by a cup of tea, a pack of cookies, and ChatGPT 5.

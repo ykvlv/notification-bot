@@ -198,4 +198,4 @@ but also provides **ready-made audio examples** for quick use as Telegram custom
 - Start message now highlights `/examples` and explains MP3 usage.
 - README.md written:
   - Features, commands, configuration, storage, build, license.
-  - With a playful note: *“☕️ This bot was fully vibe-coded in ~3 hours, powered by a liter of tea, a pack of cookies, and ChatGPT 5.”*
+  - With a playful note: *“☕️ This bot was fully vibe-coded in ~3 hours, powered by a cup of tea, a pack of cookies, and ChatGPT 5.”*
