@@ -125,8 +125,10 @@ At this stage, the bot can:
 ## Stage 3 — Active Hours, Timezone, Message, NextFire
 
 - Implemented **NextFire** computation (`internal/domain/schedule.go`):
-  - Respects user interval, active hours window (including wrap-around windows like 22:00–02:00), and IANA timezone.
-  - If outside window, jumps to next window start; otherwise advances by interval and clamps to next valid window.
+  - Slots are anchored to the beginning of the active window; the next reminder is the nearest aligned slot strictly after "now" (no minute tails).
+  - If the computed slot equals the end of the window, it is allowed. Example: 09:00–23:00 with 2h interval → 09:00, 11:00, …, 21:00, 23:00.
+  - Wrap-around windows are supported (e.g., `22:00–02:00`); example: 01:30 with 30m interval → 02:00 is valid.
+  - If outside the window, scheduling jumps to the next window start; otherwise the aligned slot within the current window is chosen. If the aligned slot spills past the window, it moves to the next window start.
 
 - Extended Telegram handlers:
   - **Active hours** (`set_hours`): presets (08:00–22:00, 09:00–21:00, 22:00–02:00) + Custom input (`HH:MM–HH:MM`).
@@ -141,7 +143,7 @@ At this stage, the bot can:
 
 **Status:**  
 The bot can now fully configure **interval**, **active hours**, **timezone**, and **message**.  
-It computes and stores `next_fire_at`. Actual dispatching of notifications will be implemented in Stage 4.
+It computes and stores `next_fire_at` using anchored-to-window scheduling.
 
 ## Stage 4 — Scheduler & Notification Dispatch
 
@@ -149,7 +151,7 @@ It computes and stores `next_fire_at`. Actual dispatching of notifications will 
   - Runs a background loop every 30 seconds.
   - Calls `repo.ListDue(now)` to fetch users with `next_fire_at <= now`.
   - Sends `u.Message` to each due user via Telegram.
-  - Updates `last_sent_at` and recomputes `next_fire_at` using `domain.NextFire`.
+  - Updates `last_sent_at` and recomputes `next_fire_at` using `domain.NextFire` (anchored slots).
 
 - Extended **telegram.Router**:
   - Added `SendMessage(chatID, text)` method so Router implements `scheduler.Sender`.
